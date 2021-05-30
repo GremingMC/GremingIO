@@ -1,0 +1,336 @@
+package com.greming.io;
+
+/**
+ * @author RomnSD
+ */
+public class ByteBufferReader extends ByteBufferWrapper
+{
+
+    
+    /**
+     * @param buffer ByteBuffer 
+     */
+    public ByteBufferReader(ByteBuffer buffer) { super(buffer, 0, ByteBufferType.BigEndian); }
+    
+    
+    /**
+     * @param buffer ByteBuffer 
+     * @param offset int 
+     * @param bbtype ByteBufferType
+     */
+    public ByteBufferReader(ByteBuffer buffer, int offset, ByteBufferType bbtype) { super(buffer, offset, bbtype); }
+    
+    
+    
+    /**
+     * Read one byte from the buffer.
+     * 
+     * Lee un byte del buffer.
+     * 
+     * @return byte
+     */
+    public byte readByte() { return buffer.get(offset++); }
+    
+    
+    /**
+     * 
+     * @return boolean 
+     */
+    public boolean readBoolean() { return buffer.get(offset++) == 1; }
+    
+    
+    /**
+     * Read a signed Int16 from the buffer.
+     * 
+     * Lee un Int16 con signo del buffer.
+     * 
+     * @return short 
+     */
+    public short readInt16()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return (short) readVar(2);
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return readLittleInt16();
+        
+        return readBigInt16();
+    }
+    
+    
+    /**
+     * Read an unsigned Int16 from the buffer.
+     * 
+     * Lee un Int16 sin signo del buffer.
+     * 
+     * @return short 
+     */
+    public short readUInt16()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return (short) (readVar(2) & 0x7FFF);
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return (short) (readLittleInt16() & 0x7FFF);
+        
+        return (short) (readBigInt16() & 0x7FFF);
+    }
+    
+    
+    /**
+     * @return short
+     */
+    public short readLittleInt16()
+    {
+        return (short) ((readByte() & 0xFF) |
+                       ((readByte() & 0xFF) << 8));
+    }
+    
+    
+    /**
+     * @return short
+     */
+    public short readBigInt16()
+    {
+        return (short) ((readByte() & 0xFF) << 8 |
+                        (readByte() & 0xFF));
+    }
+
+    
+    /**
+     * Read a signed Int24 from the buffer.
+     * 
+     * Lee un Int24 con signo del buffer.
+     * 
+     * @return 
+     */
+    public int readInt24()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return (int) readVar(3);
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return readLittleInt24();
+        
+        return readBigInt24();
+    }
+    
+    
+    /**
+     * Read an unsigned Int24 from the buffer.
+     * 
+     * Lee un Int24 con sin signo del buffer.
+     * 
+     * @return 
+     */
+    public int readUInt24()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return (int) (readVar(3) & 0xFFFFFF16);
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return (readLittleInt24() & 0xFFFFFF16);
+        
+        return readBigInt24() & 0xFFFFFF16;
+    }
+    
+    
+    /**
+     * @return int 
+     */
+    public int readLittleInt24()
+    {
+        return ((readByte() & 0xFF)      |
+                (readByte() & 0xFF) << 8 |
+                (readByte() & 0xFF) << 16);
+    }
+    
+    
+    /**
+     * @return int 
+     */
+    public int readBigInt24()
+    {
+        return ((readByte() & 0xFF)      |
+                (readByte() & 0xFF) << 8 |
+                (readByte() & 0xFF) << 16);
+    }
+    
+    
+    /**
+     * @return int 
+     */
+    public int readInt32()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return readVarInt();
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return readLittleInt32();
+        
+        return readBigInt32();
+    }
+    
+    
+    public int readUInt32()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return (readVarInt() & 0xFFFFFF16);
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return (readLittleInt32() & 0xFFFFFF16);
+        
+        return (readBigInt32() & 0xFFFFFF16);
+    }
+    
+    
+    public int readLittleInt32()
+    {
+        return ((readByte() & 0xFF)       |
+                (readByte() & 0xFF) << 8  |
+                (readByte() & 0xFF) << 16 |
+                (readByte() & 0xFF) << 24);
+    }
+    
+    
+    public int readBigInt32()
+    {
+        return ((readByte() & 0xFF) << 24 |
+                (readByte() & 0xFF) << 16 |
+                (readByte() & 0xFF) << 8  |
+                (readByte() & 0xFF));
+    }
+    
+    
+    public long readInt64()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return readVarLong();
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return readLittleInt64();
+        
+        return readBigInt64();
+    }
+    
+    
+    public long readUInt64()
+    {
+        if (bbtype.equals(ByteBufferType.VarInt))
+            return readVarLong();
+        
+        if (bbtype.equals(ByteBufferType.LittleEndian))
+            return readLittleInt64();
+        
+        return readBigInt64();
+    }
+    
+    public long readLittleInt64()
+    {
+        return ((long) (readByte() & 0xFF)       |
+                (long) (readByte() & 0xFF) << 8  |
+                (long) (readByte() & 0xFF) << 16 |
+                (long) (readByte() & 0xFF) << 24 | 
+                (long) (readByte() & 0xFF) << 32 | 
+                (long) (readByte() & 0xFF) << 40 | 
+                (long) (readByte() & 0xFF) << 48 | 
+                (long) (readByte() & 0xFF) << 56); 
+    }
+    
+    
+    /**
+     * Get an Int64 from the buffer.
+     * 
+     * Consigue un Int64 del buffer.
+     * 
+     * @return long 
+     */
+    public long readBigInt64()
+    {
+        return ((long) (readByte() & 0xFF) << 56 |
+                (long) (readByte() & 0xFF) << 48 |
+                (long) (readByte() & 0xFF) << 40 |
+                (long) (readByte() & 0xFF) << 32 | 
+                (long) (readByte() & 0xFF) << 24 | 
+                (long) (readByte() & 0xFF) << 16 | 
+                (long) (readByte() & 0xFF) << 8  | 
+                (long) (readByte() & 0xFF)); 
+    }
+    
+    
+    /**
+     * Read a float from the buffer.
+     * 
+     * Lee un flotante del buffer.
+     * 
+     * @return float
+     */
+    public float readFloat32() { return Float.intBitsToFloat(readInt32()); }
+    
+    
+    /**
+     * @return double
+     */
+    public double readFloat64() { return Double.longBitsToDouble(readInt64()); }
+    
+    
+    /**
+     * @return int
+     */
+    public int readVarInt()
+    {
+        int result = (int) readVar(5);
+        return ((result << 1) ^ (-(result & 1)));
+    }
+    
+    
+    /**
+     * @return int 
+     */
+    public int readUnsignedVarInt() { return (int) readVar(4); }
+    
+    
+    /**
+     * @return long 
+     */
+    public long readVarLong()
+    {
+        long result = readVar(8);
+        return ((result << 1) ^ (-(result & 1)));
+    }
+    
+    
+    /**
+     * @return long 
+     */
+    public long readUnsignedVarLong() { return readVar(8); }
+    
+    
+    /**
+     * @param maxSize int 
+     * @return        long 
+     */
+    protected long readVar(int maxSize)
+    {
+        long result = 0L;
+        
+        byte head;
+        byte size = 0;
+        
+        do {
+            head = readByte();
+            result |= ((long) head & 0x7F) << (7 * size++);
+            
+            if (size >= maxSize)
+                return 0;
+            
+        } while ((head & 0x80) == 0x80);
+        
+        return result;
+    }
+    
+    
+    
+    
+    
+}
