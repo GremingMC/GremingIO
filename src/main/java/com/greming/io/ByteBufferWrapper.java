@@ -75,7 +75,13 @@ public abstract class ByteBufferWrapper
     /**
      * @return boolean 
      */
-    public boolean eof() { return (offset >= buffer.length()); }
+    public boolean eof() { return freeBytes() <= 0; }
+    
+    
+    /**
+     * @return int 
+     */
+    public int freeBytes() { return buffer.length() - offset; }
     
     
 }

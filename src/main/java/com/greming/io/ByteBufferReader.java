@@ -59,25 +59,6 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     
     /**
-     * Read an unsigned Int16 from the buffer.
-     * 
-     * Lee un Int16 sin signo del buffer.
-     * 
-     * @return short 
-     */
-    public short readUInt16()
-    {
-        if (bbtype.equals(ByteBufferType.VarInt))
-            return (short) (readVar(2) & 0x7FFF);
-        
-        if (bbtype.equals(ByteBufferType.LittleEndian))
-            return (short) (readLittleInt16() & 0x7FFF);
-        
-        return (short) (readBigInt16() & 0x7FFF);
-    }
-    
-    
-    /**
      * @return short
      */
     public short readLittleInt16()
@@ -100,8 +81,6 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * Read a signed Int24 from the buffer.
      * 
-     * Lee un Int24 con signo del buffer.
-     * 
      * @return 
      */
     public int readInt24()
@@ -113,25 +92,6 @@ public class ByteBufferReader extends ByteBufferWrapper
             return readLittleInt24();
         
         return readBigInt24();
-    }
-    
-    
-    /**
-     * Read an unsigned Int24 from the buffer.
-     * 
-     * Lee un Int24 con sin signo del buffer.
-     * 
-     * @return 
-     */
-    public int readUInt24()
-    {
-        if (bbtype.equals(ByteBufferType.VarInt))
-            return (int) (readVar(3) & 0xFFFFFF16);
-        
-        if (bbtype.equals(ByteBufferType.LittleEndian))
-            return (readLittleInt24() & 0xFFFFFF16);
-        
-        return readBigInt24() & 0xFFFFFF16;
     }
     
     
@@ -172,18 +132,9 @@ public class ByteBufferReader extends ByteBufferWrapper
     }
     
     
-    public int readUInt32()
-    {
-        if (bbtype.equals(ByteBufferType.VarInt))
-            return (readVarInt() & 0xFFFFFF16);
-        
-        if (bbtype.equals(ByteBufferType.LittleEndian))
-            return (readLittleInt32() & 0xFFFFFF16);
-        
-        return (readBigInt32() & 0xFFFFFF16);
-    }
-    
-    
+    /**
+     * @return int 
+     */
     public int readLittleInt32()
     {
         return ((readByte() & 0xFF)       |
@@ -193,6 +144,9 @@ public class ByteBufferReader extends ByteBufferWrapper
     }
     
     
+    /**
+     * @return int 
+     */
     public int readBigInt32()
     {
         return ((readByte() & 0xFF) << 24 |
@@ -202,6 +156,9 @@ public class ByteBufferReader extends ByteBufferWrapper
     }
     
     
+    /**
+     * @return long 
+     */
     public long readInt64()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
@@ -214,17 +171,11 @@ public class ByteBufferReader extends ByteBufferWrapper
     }
     
     
-    public long readUInt64()
-    {
-        if (bbtype.equals(ByteBufferType.VarInt))
-            return readVarLong();
-        
-        if (bbtype.equals(ByteBufferType.LittleEndian))
-            return readLittleInt64();
-        
-        return readBigInt64();
-    }
-    
+    /**
+     * Read a signed Int64 from the buffer.
+     * 
+     * @return long
+     */
     public long readLittleInt64()
     {
         return ((long) (readByte() & 0xFF)       |
@@ -239,10 +190,6 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     
     /**
-     * Get an Int64 from the buffer.
-     * 
-     * Consigue un Int64 del buffer.
-     * 
      * @return long 
      */
     public long readBigInt64()
@@ -260,9 +207,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     /**
      * Read a float from the buffer.
-     * 
-     * Lee un flotante del buffer.
-     * 
+     *
      * @return float
      */
     public float readFloat32() { return Float.intBitsToFloat(readInt32()); }
