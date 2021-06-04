@@ -15,6 +15,13 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     /**
      * @param buffer ByteBuffer 
+     * @param bbtype ByteBufferType
+     */
+    public ByteBufferReader(ByteBuffer buffer, ByteBufferType bbtype) { super(buffer, 0, bbtype); }
+    
+    
+    /**
+     * @param buffer ByteBuffer 
      * @param offset int 
      * @param bbtype ByteBufferType
      */
@@ -25,31 +32,38 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * Read one byte from the buffer.
      * 
-     * Lee un byte del buffer.
-     * 
      * @return byte
      */
     public byte readByte() { return buffer.get(offset++); }
     
     
     /**
-     * 
      * @return boolean 
      */
     public boolean readBoolean() { return buffer.get(offset++) == 1; }
     
     
     /**
+     * @param length int 
+     * @return       byte[]
+     */
+    public byte[] get(int length)
+    {
+        try { return buffer.get(offset, length); } finally {
+            offset += length;
+        }
+    }
+    
+    
+    /**
      * Read a signed Int16 from the buffer.
-     * 
-     * Lee un Int16 con signo del buffer.
      * 
      * @return short 
      */
     public short readInt16()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return (short) readVar(2);
+            return (short) readVar(3);
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt16();
@@ -86,7 +100,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     public int readInt24()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return (int) readVar(3);
+            return (int) readVar(4);
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt24();
@@ -111,9 +125,9 @@ public class ByteBufferReader extends ByteBufferWrapper
      */
     public int readBigInt24()
     {
-        return ((readByte() & 0xFF)      |
-                (readByte() & 0xFF) << 8 |
-                (readByte() & 0xFF) << 16);
+        return ((readByte() & 0xFF) << 16 |
+                (readByte() & 0xFF) << 8  |
+                (readByte() & 0xFF));
     }
     
     
@@ -123,7 +137,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     public int readInt32()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return readVarInt();
+            return (int) readVar(5);
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt32();
@@ -162,7 +176,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     public long readInt64()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return readVarLong();
+            return readVar(9);
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt64();
@@ -232,7 +246,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * @return int 
      */
-    public int readUnsignedVarInt() { return (int) readVar(4); }
+    public int readUnsignedVarInt() { return (int) readVar(5); }
     
     
     /**
@@ -240,7 +254,7 @@ public class ByteBufferReader extends ByteBufferWrapper
      */
     public long readVarLong()
     {
-        long result = readVar(8);
+        long result = readVar(9);
         return ((result << 1) ^ (-(result & 1)));
     }
     
@@ -248,7 +262,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * @return long 
      */
-    public long readUnsignedVarLong() { return readVar(8); }
+    public long readUnsignedVarLong() { return readVar(9); }
     
     
     /**
@@ -264,18 +278,15 @@ public class ByteBufferReader extends ByteBufferWrapper
         
         do {
             head = readByte();
-            result |= ((long) head & 0x7F) << (7 * size++);
+            result |= (long) (head & 0x7F) << (7 * size++);
             
-            if (size >= maxSize)
+            if (size > maxSize)
                 return 0;
             
         } while ((head & 0x80) == 0x80);
         
         return result;
     }
-    
-    
-    
-    
+
     
 }

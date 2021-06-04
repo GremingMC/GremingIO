@@ -1,6 +1,7 @@
 package com.greming.io;
 
 import java.util.Arrays;
+import java.nio.Buffer;
 
 
 /**
@@ -11,10 +12,6 @@ public class ByteBuffer
     
     
     protected byte[] buffer;
-    
-    protected ByteBufferWriter writer;
-    protected ByteBufferReader reader;
-    
     
     
     /**
@@ -28,22 +25,10 @@ public class ByteBuffer
      */
     public ByteBuffer(byte[] buffer)
     {
+        if (buffer == null)
+            buffer = new byte[64];
+        
         this.buffer = buffer;
-        this.writer = new ByteBufferWriter(this);
-        this.reader = new ByteBufferReader(this);
-    }
-    
-    
-    /**
-     * @param buffer byte[]
-     * @param writer ByteBufferWriter
-     * @param reader ByteBufferReader
-     */
-    public ByteBuffer(byte[] buffer, ByteBufferWriter writer, ByteBufferReader reader)
-    {
-        this.buffer = buffer;
-        setWriter(writer);
-        setReader(reader);
     }
     
     
@@ -56,44 +41,7 @@ public class ByteBuffer
     /**
      * @param bytes byte[]
      */
-    public void setBytes(byte[] bytes)
-    {
-        buffer = bytes;
-        writer.offset(0);
-        reader.offset(0);
-    }
-    
-
-    /**
-     * @return ByteBufferWriter
-     */
-    public ByteBufferWriter getWriter() { return writer; }
-    
-    
-    /**
-     * @param writer ByteBufferWriter
-     */
-    public final void setWriter(ByteBufferWriter writer)
-    {
-        assert(writer != null);
-        this.writer = writer;
-    }
-    
-    
-    /**
-     * @return ByteBufferReader 
-     */
-    public ByteBufferReader getReader() { return reader; }
-    
-    
-    /**
-     * @param reader ByteBufferReader 
-     */
-    public final void setReader(ByteBufferReader reader) 
-    {
-        assert(reader != null);
-        this.reader = reader;
-    }
+    public void setBytes(byte[] bytes) { buffer = bytes; }
     
 
     /**
@@ -117,7 +65,7 @@ public class ByteBuffer
     public byte[] get(int offset, int size)
     {
         byte[] result = new byte[size];
-        System.arraycopy(buffer, offset, result, size, size);
+        System.arraycopy(buffer, offset, result, 0, size);
         
         return result;
     }
@@ -151,10 +99,7 @@ public class ByteBuffer
      * @param other ByteBuffer 
      * @return      boolean 
      */
-    public boolean equals(ByteBuffer other)
-    {
-        return Arrays.equals(buffer, other.getBytes());
-    }
+    public boolean equals(ByteBuffer other) { return Arrays.equals(buffer, other.getBytes()); }
     
     
 }

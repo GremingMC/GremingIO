@@ -2,11 +2,10 @@ package com.greming.io;
 
 /**
  * @author RomnSD
+ * @param <T>
  */
 public abstract class ByteBufferWrapper
 {
-    
-    public enum ByteBufferType { VarInt, LittleEndian, BigEndian }
     
     protected ByteBuffer buffer;
     protected int offset;
@@ -41,23 +40,23 @@ public abstract class ByteBufferWrapper
     /**
      * @return int 
      */
-    public int offset() { return offset; }
+    public int getOffset() { return offset; }
     
     
     /**
      * @param offset int 
      */
-    public void offset(int offset)
+    public void setOffset(int offset)
     {
-        assert(offset < buffer.length() && offset >= 0);
-        this.offset = offset;
+        if (offset < buffer.length() && offset >= 0);
+            this.offset = offset;
     }
     
     
     /**
      * @param plus int 
      */
-    public void seek(int plus) { offset(offset + plus); }
+    public void seek(int plus) { setOffset(offset + plus); }
     
     
     /**
@@ -73,6 +72,12 @@ public abstract class ByteBufferWrapper
     
     
     /**
+     * @return byte[]
+     */
+    public byte[] slice() { return buffer.get(0, offset); }
+    
+    
+    /**
      * @return boolean 
      */
     public boolean eof() { return freeBytes() <= 0; }
@@ -82,6 +87,7 @@ public abstract class ByteBufferWrapper
      * @return int 
      */
     public int freeBytes() { return buffer.length() - offset; }
+    
     
     
 }

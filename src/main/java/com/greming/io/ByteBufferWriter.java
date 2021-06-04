@@ -1,7 +1,6 @@
 package com.greming.io;
 
 /**
- *
  * @author RomnSD
  */
 public class ByteBufferWriter extends ByteBufferWrapper
@@ -15,6 +14,13 @@ public class ByteBufferWriter extends ByteBufferWrapper
      * @param buffer ByteBuffer 
      */
     public ByteBufferWriter(ByteBuffer buffer) { super(buffer, 0, ByteBufferType.BigEndian); }
+    
+    
+    /**
+     * @param buffer ByteBuffer 
+     * @param bbtype ByteBufferType
+     */
+    public ByteBufferWriter(ByteBuffer buffer, ByteBufferType bbtype) { super(buffer, 0, bbtype); }
     
     
     /**
@@ -47,7 +53,10 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void allocate(int bytes)
     {
         if (freeBytes() < bytes) {
-            buffer.expand(buffer.length() + (expandFactor * bytes));
+            if (bytes < expandFactor)
+                bytes = expandFactor;
+            
+            buffer.expand(buffer.length() + bytes);
         }
     }
     
@@ -107,8 +116,8 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeLittleInt16(short value)
     {
         put(new byte[] {
-            (byte)  (value & 0xFF),
-            (byte) ((value & 0xFF) >> 8),
+            (byte)  value,
+            (byte) (value >> 8),
         });
     }
     
@@ -119,8 +128,8 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeBigInt16(short value)
     {
         put(new byte[] {
-            (byte) ((value & 0xFF) >> 8),
-            (byte)  (value & 0xFF)
+            (byte) (value >> 8),
+            (byte)  value
         });
     }
     
@@ -150,9 +159,9 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeLittleInt24(int value)
     {
         put(new byte[] {
-            (byte)  (value & 0xFF),
-            (byte) ((value & 0xFF) >> 8 ),
-            (byte) ((value & 0xFF) >> 16)
+            (byte)  value,
+            (byte) (value >> 8 ),
+            (byte) (value >> 16)
         });
     }
     
@@ -163,9 +172,9 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeBigInt24(int value)
     {
         put(new byte[] {
-           (byte) ((value & 0xFF) >> 16),
-           (byte) ((value & 0xFF) >> 8 ),
-           (byte)  (value & 0xFF)
+           (byte) (value >> 16),
+           (byte) (value >> 8 ),
+           (byte)  value
         });
     }
     
@@ -195,10 +204,10 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeLittleInt32(int value)
     {
         put(new byte[] {
-            (byte)  (value & 0xFF),
-            (byte) ((value & 0xFF) >> 8 ),
-            (byte) ((value & 0xFF) >> 16),
-            (byte) ((value & 0xFF) >> 24)
+            (byte)  value,
+            (byte) (value >> 8 ),
+            (byte) (value >> 16),
+            (byte) (value >> 24)
         });
     }
     
@@ -209,10 +218,10 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeBigInt32(int value)
     {
         put(new byte[] {
-           (byte) ((value & 0xFF) >> 24),
-           (byte) ((value & 0xFF) >> 16),
-           (byte) ((value & 0xFF) >> 8 ),
-           (byte)  (value & 0xFF)
+           (byte) (value >> 24),
+           (byte) (value >> 16),
+           (byte) (value >> 8 ),
+           (byte)  value
         });
     }
     
@@ -242,14 +251,14 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeLittleInt64(long value)
     {
         put(new byte[] {
-            (byte)  (value & 0xFF),
-            (byte) ((value & 0xFF) >> 8 ),
-            (byte) ((value & 0xFF) >> 16),
-            (byte) ((value & 0xFF) >> 24),
-            (byte) ((value & 0xFF) >> 32),
-            (byte) ((value & 0xFF) >> 40),
-            (byte) ((value & 0xFF) >> 48),
-            (byte) ((value & 0xFF) >> 56)            
+            (byte)  value,
+            (byte) (value >> 8 ),
+            (byte) (value >> 16),
+            (byte) (value >> 24),
+            (byte) (value >> 32),
+            (byte) (value >> 40),
+            (byte) (value >> 48),
+            (byte) (value >> 56)            
         });
     }
     
@@ -260,16 +269,40 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeBigInt64(long value)
     {
         put(new byte[] {
-           (byte) ((value & 0xFF) >> 56),
-           (byte) ((value & 0xFF) >> 48),
-           (byte) ((value & 0xFF) >> 40),
-           (byte) ((value & 0xFF) >> 32),
-           (byte) ((value & 0xFF) >> 24),
-           (byte) ((value & 0xFF) >> 16),
-           (byte) ((value & 0xFF) >> 8 ),
-           (byte)  (value & 0xFF)
+           (byte) (value >> 56),
+           (byte) (value >> 48),
+           (byte) (value >> 40),
+           (byte) (value >> 32),
+           (byte) (value >> 24),
+           (byte) (value >> 16),
+           (byte) (value >> 8 ),
+           (byte)  value
         });
     }
+    
+    
+    /**
+     * @param value 
+     */
+    public void writeFloat32(float value) { writeInt32(Float.floatToIntBits(value)); }
+    
+    
+    /**
+     * @param value 
+     */
+    public void writeFloat64(double value) { writeInt64(Double.doubleToLongBits(value)); }
+    
+    
+    /**
+     * @param value 
+     */
+    public void writeVarInt(int value) { writeVar((value << 1) ^ (value >> 31)); }
+    
+    
+    /**
+     * @param value 
+     */
+    public void writeVarLong(long value) { writeVar((value << 1) ^ (value >> 63)); }
 
     
     /**
@@ -279,7 +312,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     {
         do {
             long temp = value;
-            value >>>= 7;
+            value >>= 7;
             
             if (value != 0L)
                 temp |= 0x80;
