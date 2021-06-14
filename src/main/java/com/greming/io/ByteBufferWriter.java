@@ -28,6 +28,8 @@
 
 package com.greming.io;
 
+import java.nio.charset.Charset;
+
 
 public class ByteBufferWriter extends ByteBufferWrapper
 {
@@ -351,10 +353,18 @@ public class ByteBufferWriter extends ByteBufferWrapper
     /**
      * @param value String 
      */
-    public void writeString(String value) 
+    public void writeString(String value) { writeString(value, Charset.forName("UTF-8")); }
+    
+    
+    /**
+     * @param value   String 
+     * @param charset Charset
+     */
+    public void writeString(String value, Charset charset)
     {
-        writeInt16((short) value.length());
-        put(value.getBytes());
+        byte[] bytes = value.getBytes(charset);
+        writeInt16((byte) bytes.length);
+        put(bytes);
     }
     
     

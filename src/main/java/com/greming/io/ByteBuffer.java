@@ -139,6 +139,32 @@ public class ByteBuffer implements Cloneable
     
     
     /**
+     * @return ByteBufferReader
+     */
+    public ByteBufferReader reader() { return reader(ByteBufferType.BigEndian); }
+    
+    
+    /**
+     * @param bbtype ByteBufferType
+     * @return       ByteBufferReader
+     */
+    public ByteBufferReader reader(ByteBufferType bbtype) { return new ByteBufferReader(this, bbtype); }
+    
+    
+    /**
+     * @return ByteBufferWriter 
+     */
+    public ByteBufferWriter writer() { return writer(ByteBufferType.LittleEndian); }
+    
+    
+    /**
+     * @param bbtype ByteBufferType
+     * @return       ByteBufferWriter
+     */
+    public ByteBufferWriter writer(ByteBufferType bbtype) { return new ByteBufferWriter(this, bbtype); }
+    
+    
+    /**
      * @param buffer byte[]
      * @return       byte[]
      */
@@ -174,7 +200,7 @@ public class ByteBuffer implements Cloneable
      * @param compressionLevel int
      * @return                 byte[]
      */
-    public static byte[] encodeZip(byte[] buffer, int outSize , int compressionLevel)
+    public static byte[] encodeZip(byte[] buffer, int outSize, int compressionLevel)
     {
         Deflater deflater = new Deflater(compressionLevel, true);
         deflater.setInput(buffer);
@@ -202,7 +228,7 @@ public class ByteBuffer implements Cloneable
      * @param compressionLevel int 
      * @return                 byte[]
      */
-    public static byte[] decodeZip(byte[] buffer, int outSize , int compressionLevel)
+    public static byte[] decodeZip(byte[] buffer, int outSize, int compressionLevel)
     {
         Inflater inflater = new Inflater(true);
         inflater.setInput(buffer);

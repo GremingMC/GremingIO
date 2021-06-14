@@ -28,6 +28,8 @@
 
 package com.greming.io;
 
+import java.nio.charset.Charset;
+
 
 public class ByteBufferReader extends ByteBufferWrapper
 {
@@ -318,7 +320,14 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * @return String
      */
-    public String readString() { return new String(get((int) readInt16())); }
+    public String readString() { return readString(Charset.forName("UTF-8")); }
+    
+    
+    /**
+     * @param charset Charset
+     * @return        String
+     */
+    public String readString(Charset charset) { return new String(get((int) readInt16()), charset); }
 
     
 }
