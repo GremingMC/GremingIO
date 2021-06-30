@@ -34,6 +34,7 @@ public abstract class ByteBufferWrapper
     
     protected ByteBuffer buffer;
     protected int offset;
+    protected int origin;
     protected ByteBufferType bbtype;
     
     
@@ -85,6 +86,24 @@ public abstract class ByteBufferWrapper
     
     
     /**
+     * @return int
+     */
+    public int getOrigin() { return origin; }
+    
+    
+    /**
+     * @param origin 
+     */
+    public void setOrigin(int origin) { this.origin = origin; }
+    
+
+    /**
+     * @return int
+     */
+    public int rewind() { return (offset = origin); } 
+    
+    
+    /**
      * @return ByteBufferType
      */
     public ByteBufferType bufferType() { return bbtype; }
@@ -103,6 +122,20 @@ public abstract class ByteBufferWrapper
     
     
     /**
+     * @return int 
+     */
+    public int flushExtraBytes()
+    {
+        if (buffer.length() > offset) {
+            buffer.setBytes(slice());
+            return offset;
+        }
+        
+        return 0;
+    }
+    
+    
+    /**
      * @return boolean 
      */
     public boolean eof() { return freeBytes() <= 0; }
@@ -112,7 +145,6 @@ public abstract class ByteBufferWrapper
      * @return int 
      */
     public int freeBytes() { return buffer.length() - offset; }
-    
     
     
 }

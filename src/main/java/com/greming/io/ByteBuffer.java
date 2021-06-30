@@ -29,9 +29,7 @@
 package com.greming.io;
 
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+import java.util.Objects;
 
 
 public class ByteBuffer implements Cloneable
@@ -39,6 +37,9 @@ public class ByteBuffer implements Cloneable
     
     
     protected byte[] buffer;
+    protected boolean resizable = true;
+    protected final Object locker = new Object();
+    
     
     
     /**
@@ -68,7 +69,25 @@ public class ByteBuffer implements Cloneable
     /**
      * @param bytes byte[]
      */
-    public void setBytes(byte[] bytes) { buffer = bytes; }
+    public void setBytes(byte[] bytes)
+    {
+        if (!resizable)
+            throw new RuntimeException("ByteBuffer cannot be modified!");
+        
+        buffer = Objects.requireNonNull(bytes);
+    }
+    
+    
+    /**
+     * @return boolean
+     */
+    public boolean isResizable() { return resizable; }
+    
+    
+    /**
+     * @param resizable boolean
+     */
+    public void setResizable(boolean resizable) { this.resizable = resizable; }
     
 
     /**
@@ -81,21 +100,21 @@ public class ByteBuffer implements Cloneable
      * @param offset int
      * @return       byte 
      */
-    public byte get(int offset) { return offset >= buffer.length ? (byte) 0 : buffer[offset]; }
+    public byte get(int offset) { return buffer[offset]; }
     
     
     /**
      * @param offset int 
-     * @param size   int 
+     * @param length int 
      * @return       byte[]
      */
-    public byte[] get(int offset, int size)
+    public byte[] get(int offset, int length)
     {
-        if (size > buffer.length)
-            return new byte[0];
-        
-        byte[] result = new byte[size];
-        System.arraycopy(buffer, offset, result, 0, size);
+        if (length < 0 || length > (buffer.length - offset))
+            throw new RuntimeException("");
+
+        byte[] result = new byte[length];
+        System.arraycopy(buffer, offset, result, 0, length);
         
         return result;
     }
@@ -120,9 +139,15 @@ public class ByteBuffer implements Cloneable
      */
     public void expand(int size)
     {
-        if (size > buffer.length)
-            buffer = Arrays.copyOf(buffer, size);
+        if (size > buffer.length && resizable)
+            setBytes(Arrays.copyOf(buffer, size));
     }
+    
+    
+    /**
+     * @return int
+     */
+    public int lastIndex() { return buffer.length - 1; }
     
     
     /**
@@ -135,114 +160,42 @@ public class ByteBuffer implements Cloneable
     /**
      * @return ByteBuffer
      */
-    public ByteBuffer clone() { return new ByteBuffer(Arrays.copyOf(buffer, buffer.length)); }
+    public ByteBuffer clone()
+    {
+        ByteBuffer buff = new ByteBuffer(Arrays.copyOf(buffer, buffer.length));
+        buff.setResizable(resizable);
+        
+        return buff;
+    }
+    
+    
+    public void clean() { buffer = new byte[0]; }
     
     
     /**
      * @return ByteBufferReader
      */
-    public ByteBufferReader reader() { return reader(ByteBufferType.BigEndian); }
+    public ByteBufferReader buildReader() { return buildReader(ByteBufferType.BigEndian); }
     
     
     /**
      * @param bbtype ByteBufferType
      * @return       ByteBufferReader
      */
-    public ByteBufferReader reader(ByteBufferType bbtype) { return new ByteBufferReader(this, bbtype); }
+    public ByteBufferReader buildReader(ByteBufferType bbtype) { return new ByteBufferReader(this, bbtype); }
     
     
     /**
      * @return ByteBufferWriter 
      */
-    public ByteBufferWriter writer() { return writer(ByteBufferType.LittleEndian); }
+    public ByteBufferWriter buildWriter() { return buildWriter(ByteBufferType.LittleEndian); }
     
     
     /**
      * @param bbtype ByteBufferType
      * @return       ByteBufferWriter
      */
-    public ByteBufferWriter writer(ByteBufferType bbtype) { return new ByteBufferWriter(this, bbtype); }
-    
-    
-    /**
-     * @param buffer byte[]
-     * @return       byte[]
-     */
-    public static byte[] encodeBase64(byte[] buffer)
-    {
-        Base64.Encoder encoder = Base64.getEncoder();
-        return encoder.encode(buffer);
-    }
-    
-    
-    /**
-     * @param buffer byte[]
-     * @return       byte[]
-     */
-    public static byte[] decodeBase64(byte[] buffer)
-    {
-        Base64.Decoder decoder = Base64.getDecoder();
-        return decoder.decode(buffer);
-    }
-    
-    
-    /**
-     * @param buffer           byte[]
-     * @param compressionLevel int 
-     * @return 
-     */
-    public static byte[] encodeZip(byte[] buffer, int compressionLevel) { return encodeZip(buffer, 1024 * 1024 * 2, compressionLevel); }
-    
-    
-    /**
-     * @param buffer           byte[]
-     * @param outSize          int 
-     * @param compressionLevel int
-     * @return                 byte[]
-     */
-    public static byte[] encodeZip(byte[] buffer, int outSize, int compressionLevel)
-    {
-        Deflater deflater = new Deflater(compressionLevel, true);
-        deflater.setInput(buffer);
-        deflater.finish();
-        
-        byte[] output = new byte[outSize];
-        deflater.deflate(output);
-        deflater.end();
-        
-        return output;
-    }
-    
-    
-    /**
-     * @param buffer           byte[]
-     * @param compressionLevel int 
-     * @return 
-     */
-    public static byte[] decodeZip(byte[] buffer, int compressionLevel) { return encodeZip(buffer, 1024 * 1024 * 2, compressionLevel); }
-    
-    
-    /**
-     * @param buffer           byte[]
-     * @param outSize          int 
-     * @param compressionLevel int 
-     * @return                 byte[]
-     */
-    public static byte[] decodeZip(byte[] buffer, int outSize, int compressionLevel)
-    {
-        Inflater inflater = new Inflater(true);
-        inflater.setInput(buffer);
-        
-        byte[] output = new byte[outSize];
-        
-        try { output = Arrays.copyOf(output, inflater.inflate(output)); } catch (Throwable exception) { 
-            exception.printStackTrace();
-        }
-        
-        inflater.end();
-         
-       return output;
-    }
-    
+    public ByteBufferWriter buildWriter(ByteBufferType bbtype) { return new ByteBufferWriter(this, bbtype); }
+ 
     
 }

@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Assertions;
 public class ByteBufferTest
 {
     
+    
     @Test
     public void test()
     {
@@ -42,6 +43,7 @@ public class ByteBufferTest
         test(ByteBufferType.LittleEndian);
         test(ByteBufferType.BigEndian);
     }
+    
     
     private void test(ByteBufferType type)
     {
@@ -74,6 +76,9 @@ public class ByteBufferTest
         double float64 = 784783.784343D;
         writer.writeFloat64(float64);
         
+        writer.writeVarInt32(int32);
+        writer.writeVarInt64(int64);
+        
         byte[] bytes = new byte[] { 1, 1, 1, 0, 1, 1, 0, 1 };
         writer.put(bytes);
         
@@ -89,9 +94,11 @@ public class ByteBufferTest
         Assertions.assertEquals(int64, reader.readInt64());
         Assertions.assertEquals(float32, reader.readFloat32());
         Assertions.assertEquals(float64, reader.readFloat64());
+        Assertions.assertEquals(int32, reader.readVarInt32());
+        Assertions.assertEquals(int64, reader.readVarInt64());
         Assertions.assertArrayEquals(bytes, reader.get(bytes.length));
         Assertions.assertEquals(string, reader.readString());
     }
-    
+   
     
 }

@@ -56,19 +56,37 @@ public class ByteBufferReader extends ByteBufferWrapper
     public ByteBufferReader(ByteBuffer buffer, int offset, ByteBufferType bbtype) { super(buffer, offset, bbtype); }
     
     
+    /**
+     * @param buffer byte[]
+     * @return       ByteBufferReader
+     */
+    public static ByteBufferReader wrap(byte[] buffer) { return wrap(buffer, ByteBufferType.BigEndian); }
+    
     
     /**
-     * Read one byte from the buffer.
-     * 
+     * @param buffer byte[]
+     * @param bbtype ByteBufferType
+     * @return       ByteBufferReader
+     */
+    public static ByteBufferReader wrap(byte[] buffer, ByteBufferType bbtype) { return (new ByteBuffer(buffer)).buildReader(bbtype); }    
+    
+    
+    /**
      * @return byte
      */
     public byte readByte() { return buffer.get(offset++); }
     
     
     /**
+     * @return int
+     */
+    public int readUnsignedByte() { return (readByte() & 0xFF); }
+    
+    
+    /**
      * @return boolean 
      */
-    public boolean readBoolean() { return buffer.get(offset++) == 1; }
+    public boolean readBoolean() { return buffer.get(offset++) == (byte) 1; }
     
     
     /**
@@ -77,21 +95,23 @@ public class ByteBufferReader extends ByteBufferWrapper
      */
     public byte[] get(int length)
     {
-        try { return buffer.get(offset, length); } finally {
-            offset += length;
-        }
+        if (length > freeBytes())
+            length = freeBytes();
+        
+        byte[] result = buffer.get(offset, length);
+        offset += result.length;
+        
+        return result;
     }
     
     
     /**
-     * Read a signed Int16 from the buffer.
-     * 
      * @return short 
      */
     public short readInt16()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return (short) readVar(3);
+            return (short) readVarInt32();
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt16();
@@ -121,14 +141,12 @@ public class ByteBufferReader extends ByteBufferWrapper
 
     
     /**
-     * Read a signed Int24 from the buffer.
-     * 
      * @return 
      */
     public int readInt24()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return (int) readVar(4);
+            return readVarInt32();
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt24();
@@ -165,7 +183,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     public int readInt32()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return (int) readVar(5);
+            return readVarInt32();
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt32();
@@ -204,7 +222,7 @@ public class ByteBufferReader extends ByteBufferWrapper
     public long readInt64()
     {
         if (bbtype.equals(ByteBufferType.VarInt))
-            return readVar(9);
+            return readVarInt64();
         
         if (bbtype.equals(ByteBufferType.LittleEndian))
             return readLittleInt64();
@@ -214,8 +232,6 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     
     /**
-     * Read a signed Int64 from the buffer.
-     * 
      * @return long
      */
     public long readLittleInt64()
@@ -248,8 +264,6 @@ public class ByteBufferReader extends ByteBufferWrapper
     
     
     /**
-     * Read a float from the buffer.
-     *
      * @return float
      */
     public float readFloat32() { return Float.intBitsToFloat(readInt32()); }
@@ -264,54 +278,40 @@ public class ByteBufferReader extends ByteBufferWrapper
     /**
      * @return int
      */
-    public int readVarInt()
+    public int readVarInt32()
     {
-        int result = (int) readVar(5);
-        return ((result << 1) ^ (-(result & 1)));
-    }
-    
-    
-    /**
-     * @return int 
-     */
-    public int readUnsignedVarInt() { return (int) readVar(5); }
-    
-    
-    /**
-     * @return long 
-     */
-    public long readVarLong()
-    {
-        long result = readVar(9);
-        return ((result << 1) ^ (-(result & 1)));
-    }
-    
-    
-    /**
-     * @return long 
-     */
-    public long readUnsignedVarLong() { return readVar(9); }
-    
-    
-    /**
-     * @param maxSize int 
-     * @return        long 
-     */
-    protected long readVar(int maxSize)
-    {
-        long result = 0L;
+        int result = 0, size = 0;
+        byte head = readByte();
         
-        byte head;
-        byte size = 0;
-        
-        do {
+        while (true) {
+            result |= (head & 0x7F) << (7 * size++);
+            
+            if ((head & 0x80) != 0x80 || size >= 6)
+                break;
+            
             head = readByte();
-            result |= (long) (head & 0x7F) << (7 * size++);
+        }
+        
+        return result;
+    }
+    
+    
+    /**
+     * @return long
+     */
+    public long readVarInt64()
+    {
+        long result = 0L, size = 0L;
+        byte head = readByte();
+        
+        while (true) {
+            result |= (head & 0x7FL) << (7 * size++);
             
-            if (size > maxSize)
-                return 0;
+            if ((head & 0x80) != 0x80 || size >= 11L)
+                break;
             
-        } while ((head & 0x80) == 0x80);
+            head = readByte();
+        }
         
         return result;
     }

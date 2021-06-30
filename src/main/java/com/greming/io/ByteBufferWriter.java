@@ -60,6 +60,21 @@ public class ByteBufferWriter extends ByteBufferWrapper
     
     
     /**
+     * @param buffer byte[]
+     * @return       ByteBufferWriter
+     */
+    public static ByteBufferWriter wrap(byte[] buffer) { return wrap(buffer, ByteBufferType.BigEndian); }
+    
+    
+    /**
+     * @param buffer byte[]
+     * @param bbtype ByteBufferType
+     * @return       ByteBufferWriter
+     */
+    public static ByteBufferWriter wrap(byte[] buffer, ByteBufferType bbtype) { return (new ByteBuffer(buffer)).buildWriter(bbtype); }
+    
+    
+    /**
      * @return int 
      */
     public int getExpandFactor() { return expandFactor; }
@@ -80,6 +95,9 @@ public class ByteBufferWriter extends ByteBufferWrapper
      */
     public void allocate(int bytes)
     {
+        if (!buffer.resizable)
+            return;
+        
         if (freeBytes() < bytes) {
             if (bytes < expandFactor)
                 bytes = expandFactor;
@@ -90,8 +108,6 @@ public class ByteBufferWriter extends ByteBufferWrapper
     
     
     /**
-     * Write one byte to the buffer.
-     * 
      * @param value 
      */
     public void writeByte(byte value)
@@ -125,7 +141,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeInt16(short value)
     {
         if (bbtype.equals(ByteBufferType.VarInt)) {
-            writeVar(value);
+            writeVarInt32(value);
             return;
         }
         
@@ -168,7 +184,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeInt24(int value)
     {
         if (bbtype.equals(ByteBufferType.VarInt)) {
-            writeVar(value);
+            writeVarInt32(value);
             return;
         }
         
@@ -213,7 +229,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeInt32(int value)
     {
         if (bbtype.equals(ByteBufferType.VarInt)) {
-            writeVar(value);
+            writeVarInt32(value);
             return;
         }
         
@@ -260,7 +276,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeInt64(long value)
     {
         if (bbtype.equals(ByteBufferType.VarInt)) {
-            writeVar(value);
+            writeVarInt64(value);
             return;
         }
         
@@ -322,30 +338,30 @@ public class ByteBufferWriter extends ByteBufferWrapper
     
     
     /**
-     * @param value 
+     * 
+     * @param value int
      */
-    public void writeVarInt(int value) { writeVar((value << 1) ^ (value >> 31)); }
-    
-    
-    /**
-     * @param value 
-     */
-    public void writeVarLong(long value) { writeVar((value << 1) ^ (value >> 63)); }
+    public void writeVarInt32(int value)
+    {
+        int temp;
+        do {
+            temp = value;
+            value >>>= 7;
+            writeByte(value != 0 ? (byte) (temp | 0x80) : (byte) temp);
+        } while (value != 0);
+    }
 
     
     /**
      * @param value long 
      */
-    public void writeVar(long value)
+    public void writeVarInt64(long value)
     {
+        long temp;
         do {
-            long temp = value;
-            value >>= 7;
-            
-            if (value != 0L)
-                temp |= 0x80;
-            
-            writeByte((byte) temp);
+            temp = value;
+            value >>>= 7;
+            writeByte(value != 0L ? (byte) (temp | 0x80L) : (byte) temp);
         } while (value != 0L);
     }
     
@@ -363,7 +379,7 @@ public class ByteBufferWriter extends ByteBufferWrapper
     public void writeString(String value, Charset charset)
     {
         byte[] bytes = value.getBytes(charset);
-        writeInt16((byte) bytes.length);
+        writeInt16((short) bytes.length);
         put(bytes);
     }
     
